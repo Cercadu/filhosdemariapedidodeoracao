@@ -113,20 +113,43 @@ async function carregarPedidos() {
   }
 }
 
-// Atualiza estatísticas
+// ATUALIZA ESTATÍSTICAS - VERSÃO SIMPLES E SEGURA
 function atualizarEstatisticas(pedidos) {
+  // Verifica se pedidos é um array válido
+  if (!Array.isArray(pedidos)) {
+    pedidos = [];
+  }
+  
   const total = pedidos.length;
-  const pendentes = pedidos.filter(p => !p.status.includes('oração')).length;
-  const emOracao = total - pendentes;
+  let pendentes = 0;
+  let emOracao = 0;
   
-  document.getElementById('total-pedidos').textContent = total;
-  document.getElementById('pendentes').textContent = pendentes;
-  document.getElementById('em-oracao').textContent = emOracao;
+  // Conta manualmente para evitar erros
+  pedidos.forEach(pedido => {
+    if (!pedido.status || 
+        pedido.status === '' || 
+        pedido.status === '⏳ Pendente' || 
+        pedido.status === 'Pendente') {
+      pendentes++;
+    } else {
+      emOracao++;
+    }
+  });
   
-  // Anima números
-  animarContador('total-pedidos', total);
-  animarContador('pendentes', pendentes);
-  animarContador('em-oracao', emOracao);
+  console.log('Total:', total, 'Pendentes:', pendentes, 'Em oração:', emOracao);
+  
+  // Atualiza na tela com segurança
+  atualizarElemento('total-pedidos', total);
+  atualizarElemento('pendentes', pendentes);
+  atualizarElemento('em-oracao', emOracao);
+}
+
+// FUNÇÃO AUXILIAR PARA ATUALIZAR ELEMENTOS
+function atualizarElemento(id, valor) {
+  const elemento = document.getElementById(id);
+  if (elemento) {
+    elemento.textContent = valor;
+  }
 }
 
 // Anima contadores
