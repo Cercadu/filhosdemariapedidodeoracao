@@ -2,24 +2,97 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Intercessão</title>
+  <title>Intercessão - Filhos de Maria</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-<header class="banner">
-  <img src="img/banner-intercessao.jpg" alt="Intercessão">
-</header>
+  <!-- Banner Animado -->
+  <header class="banner-intercessao">
+    <div class="banner-content">
+      <h1><i class="fas fa-hands-praying"></i> Intercessão</h1>
+      <p class="banner-subtitle">Ministério Filhos de Maria</p>
+      <div class="pulse-animation"></div>
+    </div>
+  </header>
 
-<main class="container">
-  <h1>🙏 Intercessão</h1>
-  <p>Lista de pedidos de oração do grupo</p>
-  
-  <div id="status" class="status"></div>
-  <div id="lista-pedidos"></div>
-</main>
+  <!-- Modal do Intercessor -->
+  <div id="modal-intercessor" class="modal">
+    <div class="modal-content">
+      <h3><i class="fas fa-user-circle"></i> Quem está orando?</h3>
+      <p>Digite seu nome para registrar sua intercessão:</p>
+      <input type="text" id="nome-intercessor" placeholder="Seu nome (opcional)" maxlength="30">
+      <div class="modal-buttons">
+        <button id="btn-anonimo" class="btn-secondary">
+          <i class="fas fa-user-secret"></i> Orar Anonimamente
+        </button>
+        <button id="btn-confirmar" class="btn-primary">
+          <i class="fas fa-check"></i> Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
 
-<script src="js/intercessao.js"></script>
+  <!-- Conteúdo Principal -->
+  <main class="container">
+    
+    <!-- Estatísticas -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <i class="fas fa-pray"></i>
+        <div>
+          <span class="stat-number" id="total-pedidos">0</span>
+          <span class="stat-label">Pedidos</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-clock"></i>
+        <div>
+          <span class="stat-number" id="pendentes">0</span>
+          <span class="stat-label">Aguardando</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-hands-praying"></i>
+        <div>
+          <span class="stat-number" id="em-oracao">0</span>
+          <span class="stat-label">Em oração</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls">
+      <button id="btn-recargar" class="btn-action">
+        <i class="fas fa-redo"></i> Atualizar
+      </button>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">Todos</button>
+        <button class="filter-btn" data-filter="pending">Pendentes</button>
+        <button class="filter-btn" data-filter="praying">Em oração</button>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="status"></div>
+
+    <!-- Lista de Pedidos -->
+    <div id="lista-pedidos" class="pedidos-grid"></div>
+
+    <!-- Rodapé Inspiracional -->
+    <div class="inspiration">
+      <i class="fas fa-quote-left"></i>
+      <p>"A intercessão é o amor em ação, é colocar-se no lugar do outro diante de Deus."</p>
+      <i class="fas fa-quote-right"></i>
+    </div>
+
+  </main>
+
+  <!-- Efeito de Confetes (para quando alguém ora) -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="js/intercessao.js"></script>
 </body>
 </html>
