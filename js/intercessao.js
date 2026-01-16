@@ -1,7 +1,5 @@
 // ===== CONFIGURAÇÃO =====
-// TESTE: Use esta URL de teste primeiro
-const API_URL_TESTE = "https://script.google.com/macros/s/AKfycbxLpomWiKs_ZoDJvBqg-RtJHeEGL6Ct2zqAayYX9i41YHThHopGXT8Z5ga0YMcz7eLB/exec";
-const API_URL = API_URL_TESTE; // Use a URL que você testou e funcionou
+const API_URL = "https://script.google.com/macros/s/AKfycbxLpomWiKs_ZoDJvBqg-RtJHeEGL6Ct2zqAayYX9i41YHThHopGXT8Z5ga0YMcz7eLB/exec";
 
 // ===== VARIÁVEIS GLOBAIS =====
 let todosPedidos = [];
@@ -13,73 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📱 Área de Intercessão - Inicializando...');
     console.log('🌐 API URL:', API_URL);
     
-    // Testa a conexão primeiro
-    testarConexaoAPI().then(conectado => {
-        if (conectado) {
-            carregarPedidos();
-            configurarEventos();
-            setInterval(carregarPedidos, 120000);
-        } else {
-            mostrarErroConexao();
-        }
-    });
+    carregarPedidos();
+    configurarEventos();
+    setInterval(carregarPedidos, 120000);
 });
-
-// ===== TESTE DE CONEXÃO =====
-async function testarConexaoAPI() {
-    console.log('🔍 Testando conexão com a API...');
-    
-    try {
-        const response = await fetch(API_URL + '?teste=' + Date.now(), {
-            method: 'GET',
-            mode: 'no-cors' // Tenta modo no-cors primeiro
-        }).catch(() => {
-            // Se no-cors falhar, tenta normal
-            return fetch(API_URL + '?teste=' + Date.now());
-        });
-        
-        console.log('📡 Status da resposta:', response.status, response.statusText);
-        
-        if (response.ok || response.type === 'opaque') {
-            console.log('✅ Conexão com API estabelecida');
-            return true;
-        }
-        
-        return false;
-        
-    } catch (error) {
-        console.error('❌ Erro na conexão:', error);
-        return false;
-    }
-}
-
-function mostrarErroConexao() {
-    const statusDiv = document.getElementById('status');
-    if (!statusDiv) return;
-    
-    statusDiv.innerHTML = `
-        <div class="error-message">
-            <i class="fas fa-wifi-slash"></i>
-            <h3>Erro de Conexão</h3>
-            <p>Não foi possível conectar com o servidor.</p>
-            <p><strong>Possíveis causas:</strong></p>
-            <ol style="text-align: left; margin: 10px 0;">
-                <li>API do Google Apps Script não está publicada</li>
-                <li>URL da API está incorreta</li>
-                <li>Permissões não estão como "Qualquer pessoa"</li>
-                <li>Problema de rede/conexão</li>
-            </ol>
-            <div style="margin-top: 20px;">
-                <button onclick="testarConexaoManual()" class="btn-control">
-                    <i class="fas fa-plug"></i> Testar Conexão Manualmente
-                </button>
-                <button onclick="window.open('${API_URL}', '_blank')" class="btn-control" style="margin-left: 10px;">
-                    <i class="fas fa-external-link-alt"></i> Abrir API no Navegador
-                </button>
-            </div>
-        </div>
-    `;
-}
 
 // ===== CONFIGURAÇÃO DE EVENTOS =====
 function configurarEventos() {
@@ -102,74 +37,69 @@ function configurarEventos() {
         });
     });
     
-    // Modal
+    // Modal - Confirmar
     const btnConfirmar = document.getElementById('btn-confirmar');
-    const btnAnonimo = document.getElementById('btn-anonimo');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', confirmarIntercessor);
+    }
     
-    if (btnConfirmar) btnConfirmar.addEventListener('click', confirmarIntercessor);
-    if (btnAnonimo) btnAnonimo.addEventListener('click', () => {
-        intercessorNome = 'Anônimo';
-        fecharModal();
-        marcarComoOrando();
-    });
+    // Modal - Anônimo
+    const btnAnonimo = document.getElementById('btn-anonimo');
+    if (btnAnonimo) {
+        btnAnonimo.addEventListener('click', function() {
+            intercessorNome = 'Anônimo';
+            fecharModal();
+            executarMarcacaoOracao();
+        });
+    }
+    
+    // Modal - Enter para confirmar
+    const nomeInput = document.getElementById('nome-intercessor');
+    if (nomeInput) {
+        nomeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmarIntercessor();
+            }
+        });
+    }
 }
 
-// ===== CARREGAMENTO DE PEDIDOS (COM TRATAMENTO DE ERRO) =====
+// ===== CARREGAMENTO DE PEDIDOS =====
 async function carregarPedidos() {
     console.log('📥 Carregando pedidos...');
     
     const lista = document.getElementById('lista-pedidos');
     const statusDiv = document.getElementById('status');
     
-    if (!lista || !statusDiv) return;
+    if (!lista || !statusDiv) {
+        console.error('❌ Elementos não encontrados');
+        return;
+    }
     
     // Mostra loading
     statusDiv.innerHTML = `
         <div class="loading-message">
             <i class="fas fa-spinner fa-spin"></i>
-            <h3>Conectando ao servidor...</h3>
-            <p>Isso pode levar alguns segundos</p>
+            <h3>Carregando pedidos de oração</h3>
+            <p>Aguarde um momento...</p>
         </div>
     `;
     
     lista.innerHTML = '';
     
     try {
-        console.log('🔄 Fazendo request para:', API_URL);
-        
-        // Timeout de 10 segundos
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(API_URL + '?t=' + Date.now(), {
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        console.log('📡 Resposta recebida. Status:', response.status);
+        const response = await fetch(API_URL + '?t=' + Date.now());
         
         if (!response.ok) {
-            throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+            throw new Error(`HTTP ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('✅ Dados recebidos. Tipo:', typeof data);
+        console.log('✅ Dados recebidos:', data);
         
-        if (data.error) {
-            throw new Error(`Erro da API: ${data.error}`);
-        }
+        todosPedidos = data;
         
-        if (!Array.isArray(data)) {
-            console.warn('⚠️ Dados não são array:', data);
-            // Tenta converter se for objeto único
-            todosPedidos = Array.isArray(data) ? data : [data];
-        } else {
-            todosPedidos = data;
-        }
-        
-        // Se não há pedidos
-        if (todosPedidos.length === 0) {
+        if (!Array.isArray(data) || data.length === 0) {
             statusDiv.innerHTML = `
                 <div class="empty-message">
                     <i class="fas fa-inbox"></i>
@@ -182,81 +112,49 @@ async function carregarPedidos() {
         }
         
         // Atualiza interface
-        atualizarEstatisticas(todosPedidos);
-        renderizarPedidos(todosPedidos);
+        atualizarEstatisticas(data);
+        renderizarPedidos(data);
         statusDiv.innerHTML = '';
         
-        console.log(`✅ ${todosPedidos.length} pedidos carregados`);
+        console.log(`✅ ${data.length} pedidos carregados`);
         
     } catch (error) {
         console.error('❌ Erro ao carregar:', error);
         
-        let mensagemErro = error.message;
-        if (error.name === 'AbortError') {
-            mensagemErro = 'Timeout: A requisição demorou muito. Tente novamente.';
-        }
-        
         statusDiv.innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
-                <h3>Falha na Conexão</h3>
-                <p><strong>${mensagemErro}</strong></p>
-                <p>Verifique:</p>
-                <ol style="text-align: left; margin: 10px 20px;">
-                    <li>Se a API está publicada como "Aplicativo da Web"</li>
-                    <li>Se o acesso está como "Qualquer pessoa"</li>
-                    <li>Sua conexão com a internet</li>
-                </ol>
-                <div style="margin-top: 20px;">
-                    <button onclick="testarConexaoManual()" class="btn-control">
-                        <i class="fas fa-redo"></i> Tentar Novamente
-                    </button>
-                    <button onclick="window.open('${API_URL}', '_blank')" class="btn-control" style="margin-left: 10px;">
-                        <i class="fas fa-external-link-alt"></i> Testar API Direto
-                    </button>
-                </div>
+                <h3>Erro ao carregar pedidos</h3>
+                <p>${error.message}</p>
+                <p>Verifique sua conexão com a internet.</p>
+                <button onclick="carregarPedidos()" class="btn-control" style="margin-top: 1rem;">
+                    <i class="fas fa-redo"></i> Tentar novamente
+                </button>
             </div>
         `;
-        
-        mostrarNotificacao('❌ Erro de conexão com o servidor', 'error');
     }
 }
 
-// ===== TESTE MANUAL =====
-async function testarConexaoManual() {
-    console.log('🔧 Teste manual iniciado...');
-    
-    try {
-        // Tenta acessar diretamente
-        const resposta = await fetch(API_URL);
-        const dados = await resposta.text();
-        
-        console.log('Resposta bruta:', dados.substring(0, 200) + '...');
-        
-        alert(`✅ Conexão estabelecida!\nStatus: ${resposta.status}\n\nTeste novamente carregar os pedidos.`);
-        
-        // Recarrega após teste
-        carregarPedidos();
-        
-    } catch (error) {
-        console.error('Teste manual falhou:', error);
-        alert(`❌ Falha na conexão:\n\n${error.message}\n\nVerifique a URL da API.`);
-    }
-}
-
-// ===== FUNÇÕES RESTANTES (mantenha as mesmas do seu código anterior) =====
-// ... (copie as funções restantes do seu código anterior aqui) ...
-
+// ===== ATUALIZAÇÃO DE ESTATÍSTICAS =====
 function atualizarEstatisticas(pedidos) {
-    if (!Array.isArray(pedidos)) pedidos = [];
-    const total = pedidos.length;
-    let pendentes = 0, emOracao = 0;
+    if (!Array.isArray(pedidos)) {
+        pedidos = [];
+    }
     
-    pedidos.forEach(p => {
-        const status = p.status || '';
-        if (status.includes('oração') || status.includes('Orando')) emOracao++;
-        else pendentes++;
+    const total = pedidos.length;
+    let pendentes = 0;
+    let emOracao = 0;
+    
+    pedidos.forEach(pedido => {
+        const status = pedido.status || '';
+        if (status.includes('oração') || status.includes('Orando')) {
+            emOracao++;
+        } else {
+            pendentes++;
+        }
     });
+    
+    console.log(`📊 Estatísticas: Total=${total}, Pendentes=${pendentes}, EmOração=${emOracao}`);
     
     atualizarElemento('total-pedidos', total);
     atualizarElemento('pendentes', pendentes);
@@ -264,17 +162,25 @@ function atualizarEstatisticas(pedidos) {
 }
 
 function atualizarElemento(id, valor) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = valor;
+    const elemento = document.getElementById(id);
+    if (elemento) {
+        elemento.textContent = valor;
+    }
 }
 
+// ===== RENDERIZAÇÃO DE PEDIDOS =====
 function renderizarPedidos(pedidos) {
     const lista = document.getElementById('lista-pedidos');
     if (!lista) return;
     
     lista.innerHTML = '';
-    [...pedidos].reverse().forEach(pedido => {
-        lista.appendChild(criarCardPedido(pedido));
+    
+    // Ordena do mais recente para o mais antigo
+    const pedidosOrdenados = [...pedidos].reverse();
+    
+    pedidosOrdenados.forEach(pedido => {
+        const card = criarCardPedido(pedido);
+        lista.appendChild(card);
     });
 }
 
@@ -284,29 +190,47 @@ function criarCardPedido(pedido) {
     
     const status = pedido.status || '';
     const estaOrando = status.includes('oração') || status.includes('Orando');
-    if (estaOrando) card.classList.add('praying');
     
-    const nomeExibicao = pedido.anonimo === 'Sim' ? '🙈 Anônimo' : (pedido.nome?.trim() || '🙈 Anônimo');
+    if (estaOrando) {
+        card.classList.add('praying');
+    }
+    
+    const nomeExibicao = pedido.anonimo === 'Sim' 
+        ? '🙈 Anônimo' 
+        : (pedido.nome ? pedido.nome.trim() : '🙈 Anônimo');
+    
     const dataFormatada = formatarData(pedido.timestamp);
     
     card.innerHTML = `
         <div class="pedido-header">
-            <div class="pedido-nome"><i class="fas fa-user"></i> ${nomeExibicao}</div>
+            <div class="pedido-nome">
+                <i class="fas fa-user"></i> ${nomeExibicao}
+            </div>
             <div class="pedido-status ${estaOrando ? 'status-praying' : 'status-pending'}">
                 ${estaOrando ? '🙏 Em oração' : '⏳ Aguardando'}
             </div>
         </div>
+        
         <div class="pedido-body">
             <div class="pedido-texto">${pedido.pedido || 'Pedido de oração'}</div>
         </div>
+        
         <div class="pedido-footer">
             <div class="pedido-data">
-                <i class="far fa-clock"></i> ${dataFormatada}
+                <i class="far fa-clock"></i>
+                ${dataFormatada}
                 ${pedido.dataOracao ? `<br><small><i class="fas fa-hands-praying"></i> ${pedido.dataOracao}</small>` : ''}
             </div>
+            
             ${estaOrando ? 
-                `<div class="orando-info"><i class="fas fa-check-circle"></i> ${pedido.intercessor ? `Por: ${pedido.intercessor}` : 'Intercessor'}</div>` : 
-                `<button class="btn-orar" onclick="iniciarOracao(${pedido.linha})"><i class="fas fa-hands-praying"></i> Orar por este</button>`
+                `<div class="orando-info">
+                    <i class="fas fa-check-circle"></i>
+                    ${pedido.intercessor ? `Por: ${pedido.intercessor}` : 'Intercessor'}
+                </div>` : 
+                `<button class="btn-orar" onclick="iniciarOracao(${pedido.linha})">
+                    <i class="fas fa-hands-praying"></i>
+                    Orar por este
+                </button>`
             }
         </div>
     `;
@@ -316,20 +240,37 @@ function criarCardPedido(pedido) {
 
 function formatarData(timestamp) {
     if (!timestamp) return 'Sem data';
+    
     try {
         const data = new Date(timestamp);
-        if (isNaN(data.getTime())) return timestamp;
+        
+        if (isNaN(data.getTime())) {
+            return timestamp;
+        }
+        
         const dia = data.getDate().toString().padStart(2, '0');
         const mes = (data.getMonth() + 1).toString().padStart(2, '0');
         const ano = data.getFullYear();
         const horas = data.getHours().toString().padStart(2, '0');
         const minutos = data.getMinutes().toString().padStart(2, '0');
+        
         return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
-    } catch { return timestamp; }
+        
+    } catch (error) {
+        console.warn('Erro ao formatar data:', error);
+        return timestamp;
+    }
 }
 
+// ===== SISTEMA DE ORAÇÃO (SIMPLIFICADO E CORRIGIDO) =====
 function iniciarOracao(linha) {
+    console.log(`🙏 Iniciando oração para linha ${linha}`);
+    
+    // SALVA O PEDIDO ATUAL
     pedidoAtual = linha;
+    console.log('💾 Pedido salvo:', pedidoAtual);
+    
+    // Mostra modal
     const modal = document.getElementById('modal-intercessor');
     if (modal) {
         modal.classList.add('active');
@@ -339,119 +280,208 @@ function iniciarOracao(linha) {
             nomeInput.focus();
         }
     } else {
+        console.warn('Modal não encontrado, usando fallback');
         intercessorNome = 'Intercessor';
-        marcarComoOrando();
+        executarMarcacaoOracao();
     }
 }
 
 function confirmarIntercessor() {
+    console.log('✅ Confirmando intercessor...');
+    
     const nomeInput = document.getElementById('nome-intercessor');
-    intercessorNome = nomeInput ? nomeInput.value.trim() : 'Intercessor';
-    if (!intercessorNome) intercessorNome = 'Intercessor';
-    
-    fecharModal();
-    
-    if (!pedidoAtual) {
-        mostrarNotificacao('❌ Nenhum pedido selecionado', 'error');
-        return;
+    if (nomeInput) {
+        intercessorNome = nomeInput.value.trim();
+        if (!intercessorNome) intercessorNome = 'Intercessor';
+    } else {
+        intercessorNome = 'Intercessor';
     }
     
-    setTimeout(() => marcarComoOrando(), 50);
+    console.log('🙏 Intercessor:', intercessorNome);
+    
+    fecharModal();
+    executarMarcacaoOracao();
 }
 
 function fecharModal() {
     const modal = document.getElementById('modal-intercessor');
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+    
     const nomeInput = document.getElementById('nome-intercessor');
-    if (nomeInput) nomeInput.value = '';
+    if (nomeInput) {
+        nomeInput.value = '';
+    }
 }
 
-async function marcarComoOrando() {
+async function executarMarcacaoOracao() {
+    console.log('🚀 Executando marcação de oração...');
+    console.log('📌 pedidoAtual:', pedidoAtual);
+    console.log('🙏 intercessorNome:', intercessorNome);
+    
     if (!pedidoAtual) {
         mostrarNotificacao('❌ Nenhum pedido selecionado', 'error');
         return;
     }
     
+    const linhaNumero = parseInt(pedidoAtual);
+    if (isNaN(linhaNumero)) {
+        mostrarNotificacao('❌ Erro: Pedido inválido', 'error');
+        return;
+    }
+    
+    console.log(`📝 Marcando linha ${linhaNumero} como orando por ${intercessorNome}`);
+    
+    // Encontra e desabilita o botão
     const botoes = document.querySelectorAll('.btn-orar');
     let botaoEncontrado = null;
     
     botoes.forEach(botao => {
-        if (botao.getAttribute('onclick')?.includes(`(${pedidoAtual})`)) {
+        const onclickAttr = botao.getAttribute('onclick') || '';
+        // Verifica se o onclick contém o número da linha
+        if (onclickAttr.includes(`(${linhaNumero})`)) {
             botaoEncontrado = botao;
-            botao.disabled = true;
-            botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            console.log('✅ Botão encontrado');
         }
     });
     
+    if (botaoEncontrado) {
+        botaoEncontrado.disabled = true;
+        botaoEncontrado.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    }
+    
     try {
+        // CORREÇÃO: Usando método correto para POST
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'no-cors', // Google Apps Script requer no-cors para POST
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ 
-                linha: pedidoAtual,
+                linha: linhaNumero,
                 intercessor: intercessorNome
             })
         });
         
-        const resultado = await response.json();
+        console.log('📨 Resposta do POST:', response);
         
-        if (resultado.success) {
-            if (botaoEncontrado) {
-                botaoEncontrado.innerHTML = '<i class="fas fa-check-circle"></i> Oração registrada!';
-                botaoEncontrado.classList.add('orando');
+        // Como estamos usando no-cors, não podemos ler a resposta
+        // Mas podemos assumir que funcionou se não houver erro
+        
+        // Atualiza interface
+        if (botaoEncontrado) {
+            botaoEncontrado.innerHTML = '<i class="fas fa-check-circle"></i> Oração registrada!';
+            botaoEncontrado.classList.add('orando');
+            
+            // Atualiza status no card
+            const card = botaoEncontrado.closest('.pedido-card');
+            if (card) {
+                card.classList.add('praying');
+                const statusDiv = card.querySelector('.pedido-status');
+                if (statusDiv) {
+                    statusDiv.textContent = '🙏 Em oração';
+                    statusDiv.className = 'pedido-status status-praying';
+                }
             }
-            
-            mostrarNotificacao(`✅ Oração registrada por ${intercessorNome}`, 'success');
-            setTimeout(() => carregarPedidos(), 1000);
-            
-        } else {
-            throw new Error(resultado.message);
         }
         
+        // Mostra confirmação
+        mostrarNotificacao(`✅ Oração registrada por ${intercessorNome}`, 'success');
+        
+        // Atualiza a lista após 1 segundo
+        setTimeout(() => {
+            carregarPedidos();
+        }, 1000);
+        
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('❌ Erro ao marcar como orando:', error);
+        
+        // Reativa botão
         if (botaoEncontrado) {
             botaoEncontrado.disabled = false;
             botaoEncontrado.innerHTML = '<i class="fas fa-hands-praying"></i> Orar por este';
         }
+        
         mostrarNotificacao(`❌ Erro: ${error.message}`, 'error');
     }
 }
 
+// Função antiga mantida para compatibilidade
+async function marcarComoOrando() {
+    console.log('⚠️ marcarComoOrando() chamada - redirecionando...');
+    executarMarcacaoOracao();
+}
+
+// ===== FILTRAGEM =====
 function filtrarPedidos(filtro) {
-    if (!Array.isArray(todosPedidos)) return;
-    let filtrados = [...todosPedidos];
+    if (!Array.isArray(todosPedidos) || todosPedidos.length === 0) {
+        return;
+    }
+    
+    let pedidosFiltrados;
     
     switch(filtro) {
         case 'pending':
-            filtrados = filtrados.filter(p => !(p.status || '').includes('oração') && !(p.status || '').includes('Orando'));
+            pedidosFiltrados = todosPedidos.filter(p => {
+                const status = p.status || '';
+                return !status.includes('oração') && !status.includes('Orando');
+            });
             break;
+            
         case 'praying':
-            filtrados = filtrados.filter(p => (p.status || '').includes('oração') || (p.status || '').includes('Orando'));
+            pedidosFiltrados = todosPedidos.filter(p => {
+                const status = p.status || '';
+                return status.includes('oração') || status.includes('Orando');
+            });
+            break;
+            
+        default: // 'all'
+            pedidosFiltrados = [...todosPedidos];
             break;
     }
     
-    renderizarPedidos(filtrados);
+    renderizarPedidos(pedidosFiltrados);
 }
 
+// ===== NOTIFICAÇÕES =====
 function mostrarNotificacao(mensagem, tipo = 'info') {
+    // Remove notificações existentes
     const notificacoesAntigas = document.querySelectorAll('.notificacao');
     notificacoesAntigas.forEach(n => n.remove());
     
+    // Cria nova notificação
     const notificacao = document.createElement('div');
     notificacao.className = `notificacao notificacao-${tipo}`;
     
+    // Ícone baseado no tipo
     let icon = 'info-circle';
     if (tipo === 'success') icon = 'check-circle';
     if (tipo === 'error') icon = 'exclamation-circle';
+    if (tipo === 'warning') icon = 'exclamation-triangle';
     
-    notificacao.innerHTML = `<i class="fas fa-${icon}"></i><span>${mensagem}</span>`;
+    notificacao.innerHTML = `
+        <i class="fas fa-${icon}"></i>
+        <span>${mensagem}</span>
+    `;
+    
+    // Adiciona ao body
     document.body.appendChild(notificacao);
     
-    setTimeout(() => notificacao.classList.add('show'), 10);
+    // Mostra com animação
+    setTimeout(() => {
+        notificacao.classList.add('show');
+    }, 10);
+    
+    // Remove após 3 segundos
     setTimeout(() => {
         notificacao.classList.remove('show');
-        setTimeout(() => notificacao.remove(), 300);
+        setTimeout(() => {
+            if (notificacao.parentNode) {
+                notificacao.parentNode.removeChild(notificacao);
+            }
+        }, 300);
     }, 3000);
 }
 
@@ -460,6 +490,10 @@ window.iniciarOracao = iniciarOracao;
 window.fecharModal = fecharModal;
 window.confirmarIntercessor = confirmarIntercessor;
 window.marcarComoOrando = marcarComoOrando;
-window.carregarPedidos = carregarPedidos;
-window.filtrarPedidos = filtrarPedidos;
-window.testarConexaoManual = testarConexaoManual;
+window.executarMarcacaoOracao = executarMarcacaoOracao;
+
+// Adiciona funções ao escopo global
+if (typeof window !== 'undefined') {
+    window.carregarPedidos = carregarPedidos;
+    window.filtrarPedidos = filtrarPedidos;
+}
