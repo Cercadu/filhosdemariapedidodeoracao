@@ -337,19 +337,43 @@ function formatarData(timestamp) {
 // ===== SISTEMA DE ORAÇÃO =====
 function iniciarOracao(linha) {
     console.log(`🙏 Iniciando oração para linha ${linha}`);
+    
+    // SALVA O PEDIDO ATUAL
     pedidoAtual = linha;
+    console.log('Pedido atual salvo:', pedidoAtual);
     
     // Mostra modal
     const modal = document.getElementById('modal-intercessor');
     if (modal) {
+        console.log('Abrindo modal...');
         modal.classList.add('active');
         const nomeInput = document.getElementById('nome-intercessor');
         if (nomeInput) {
             nomeInput.value = '';
             nomeInput.focus();
         }
+        
+        // Adiciona debug visual no modal
+        const modalBody = modal.querySelector('.modal-body');
+        if (modalBody) {
+            const debugInfo = modalBody.querySelector('.debug-info');
+            if (!debugInfo) {
+                const debugDiv = document.createElement('div');
+                debugDiv.className = 'debug-info';
+                debugDiv.style.cssText = `
+                    font-size: 0.8rem;
+                    color: #666;
+                    margin-top: 0.5rem;
+                    padding: 0.5rem;
+                    background: #f5f5f5;
+                    border-radius: 5px;
+                `;
+                debugDiv.textContent = `Pedido #${linha} selecionado`;
+                modalBody.appendChild(debugDiv);
+            }
+        }
     } else {
-        // Fallback se não houver modal
+        console.warn('Modal não encontrado, usando fallback');
         intercessorNome = 'Intercessor';
         marcarComoOrando();
     }
