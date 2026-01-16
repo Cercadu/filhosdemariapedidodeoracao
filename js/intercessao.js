@@ -1,41 +1,51 @@
-function getSheet() {
-  return SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-}
+const API_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
 
-function doGet() {
-  const sheet = getSheet();
-  const lastRow = sheet.getLastRow();
+const lista = document.getElementById("lista-pedidos");
+const statusDiv = document.getElementById("status");
 
-  if (lastRow < 2) {
-    return ContentService
-      .createTextOutput(JSON.stringify([]))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
+statusDiv.innerHTML = "⏳ Carregando pedidos...";
 
-  const data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+fetch(API_URL)
+  .then(res => res.json())
+  .then(data => {
 
-  const pedidos = data.map((row, i) => ({
-    linha: i + 2,
-    data: row[0],
-    nome: row[1],
-    pedido: row[2],
-    anonimo: row[3],
-    status: row[4] || ""
-  }));
+    if (!Array.isArray(data) || data.length === 0) {
+      statusDiv.innerHTML = "📭 Nenhum pedido encontrado.";
+      return;
+    }
 
-  return ContentService
-    .createTextOutput(JSON.stringify(pedidos))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+    statusDiv.innerHTML = "";
 
-function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  const sheet = getSheet();
+    data.reverse().forEach(p => {
+      const card = document.createElement("div");
+      card.className = "pedido-card";
 
-  // Coluna E = Status
-  sheet.getRange(body.linha, 5).setValue("Orando");
+      card.innerHTML = `
+        <p class="pedido-texto">${p.pedido}</p>
+        <p class="pedido-info">
+          ${p.anonimo === "Sim" ? "Anônimo" : (p.nome || "Anônimo")}
+        </p>
+        <button 
+          ${p.status === "Orando" ? "disabled" : ""}
+          onclick="orar(${p.linha}, this)">
+          ${p.status === "Orando" ? "🙏 Já estamos orando" : "🟢 Orar por este pedido"}
+        </button>
+      `;
 
-  return ContentService
-    .createTextOutput(JSON.stringify({ ok: true }))
-    .setMimeType(ContentService.MimeType.JSON);
+      lista.appendChild(card);
+    });
+  })
+  .catch(err => {
+    statusDiv.innerHTML = "❌ Erro ao carregar pedidos.";
+    console.error(err);
+  });
+
+function orar(linha, botao) {
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ linha })
+  }).then(() => {
+    botao.innerText = "🙏 Já estamos orando";
+    botao.disabled = true;
+  });
 }
