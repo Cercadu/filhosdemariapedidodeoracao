@@ -2,86 +2,176 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  background-color: #f5f5f5;
-  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
 }
 
 /* Banner */
+.banner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 30px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
 .banner img {
   width: 100%;
   height: auto;
   display: block;
 }
 
-/* Conteúdo */
+/* Container principal */
 .container {
   max-width: 800px;
-  margin: auto;
-  padding: 20px;
-  background: #ffffff;
+  margin: 0 auto;
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 h1 {
   text-align: center;
+  color: #333;
   margin-bottom: 10px;
+  font-size: 2.2em;
 }
 
-.descricao {
+.container > p {
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1.1em;
 }
 
-/* Formulário */
-.form-wrapper iframe {
-  width: 100%;
-  min-height: 600px;
-  border-radius: 8px;
-  border: none;
-}
-
-/* Rodapé */
-.rodape {
-  margin-top: 20px;
-  text-align: center;
-  font-style: italic;
-  font-size: 14px;
-  color: #555;
-}
-
-.pedido-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+/* Status */
+.status {
+  background: #e3f2fd;
   padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  text-align: center;
+  font-weight: 500;
+  color: #1565c0;
+  border-left: 5px solid #1565c0;
+}
+
+/* Cards de pedido */
+.pedido-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pedido-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.pedido-conteudo {
   margin-bottom: 15px;
-  background: #fafafa;
 }
 
 .pedido-texto {
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 1.1em;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 15px;
+  font-style: italic;
+  quotes: "“" "”" "‘" "’";
+  padding-left: 20px;
+  border-left: 3px solid #764ba2;
 }
 
-.pedido-info {
-  font-size: 14px;
+.pedido-texto::before {
+  content: open-quote;
+}
+
+.pedido-texto::after {
+  content: close-quote;
+}
+
+.pedido-metadata {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   color: #666;
-  margin-bottom: 10px;
+  font-size: 0.9em;
 }
 
-button {
-  background: #2e7d32;
+.pedido-nome {
+  font-weight: 600;
+  color: #764ba2;
+}
+
+.pedido-data {
+  color: #888;
+}
+
+/* Botões */
+.pedido-acoes {
+  text-align: right;
+}
+
+.botao-orar {
+  background: linear-gradient(to right, #4CAF50, #2E7D32);
   color: white;
   border: none;
-  padding: 10px;
-  border-radius: 6px;
+  padding: 12px 25px;
+  border-radius: 50px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 1em;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-button:disabled {
-  background: #999;
+.botao-orar:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+}
+
+.botao-orar:disabled,
+.botao-orar.orando {
+  background: linear-gradient(to right, #9E9E9E, #757575);
   cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  .container {
+    padding: 20px;
+  }
+  
+  .pedido-metadata {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .pedido-acoes {
+    text-align: center;
+  }
+  
+  .botao-orar {
+    width: 100%;
+    justify-content: center;
+  }
 }
