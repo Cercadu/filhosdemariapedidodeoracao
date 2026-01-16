@@ -207,30 +207,8 @@ function atualizarEstatisticas(pedidos) {
 function atualizarElemento(id, valor) {
     const elemento = document.getElementById(id);
     if (elemento) {
-        // Anima a mudança de valor
-        const atual = parseInt(elemento.textContent) || 0;
-        if (atual !== valor) {
-            animarContador(elemento, atual, valor);
-        }
+        elemento.textContent = valor;
     }
-}
-
-// Anima contador
-function animarContador(elemento, inicio, fim) {
-    const duracao = 500; // ms
-    const incremento = (fim - inicio) / (duracao / 16);
-    let atual = inicio;
-    
-    const timer = setInterval(() => {
-        atual += incremento;
-        
-        if ((incremento > 0 && atual >= fim) || (incremento < 0 && atual <= fim)) {
-            elemento.textContent = fim;
-            clearInterval(timer);
-        } else {
-            elemento.textContent = Math.round(atual);
-        }
-    }, 16);
 }
 
 // ===== RENDERIZAÇÃO DE PEDIDOS =====
@@ -334,18 +312,26 @@ function formatarData(timestamp) {
     }
 }
 
-// ===== SISTEMA DE ORAÇÃO =====
+// ===== SISTEMA DE ORAÇÃO (CORRIGIDO) =====
+
+// Variável global para armazenar o pedido selecionado
+let pedidoSelecionadoParaOrar = null;
+
 function iniciarOracao(linha) {
     console.log(`🙏 Iniciando oração para linha ${linha}`);
     
-    // SALVA O PEDIDO ATUAL
+    // SALVA O PEDIDO em DUAS variáveis globais
     pedidoAtual = linha;
-    console.log('Pedido atual salvo:', pedidoAtual);
+    pedidoSelecionadoParaOrar = linha;
+    
+    console.log('💾 Pedidos salvos:', {
+        pedidoAtual: pedidoAtual,
+        pedidoSelecionadoParaOrar: pedidoSelecionadoParaOrar
+    });
     
     // Mostra modal
     const modal = document.getElementById('modal-intercessor');
     if (modal) {
-        console.log('Abrindo modal...');
         modal.classList.add('active');
         const nomeInput = document.getElementById('nome-intercessor');
         if (nomeInput) {
@@ -353,24 +339,10 @@ function iniciarOracao(linha) {
             nomeInput.focus();
         }
         
-        // Adiciona debug visual no modal
-        const modalBody = modal.querySelector('.modal-body');
-        if (modalBody) {
-            const debugInfo = modalBody.querySelector('.debug-info');
-            if (!debugInfo) {
-                const debugDiv = document.createElement('div');
-                debugDiv.className = 'debug-info';
-                debugDiv.style.cssText = `
-                    font-size: 0.8rem;
-                    color: #666;
-                    margin-top: 0.5rem;
-                    padding: 0.5rem;
-                    background: #f5f5f5;
-                    border-radius: 5px;
-                `;
-                debugDiv.textContent = `Pedido #${linha} selecionado`;
-                modalBody.appendChild(debugDiv);
-            }
+        // Atualiza título do modal para mostrar qual pedido
+        const modalTitle = modal.querySelector('h3');
+        if (modalTitle) {
+            modalTitle.innerHTML = `<i class="fas fa-hands-praying"></i> Orar pelo Pedido #${linha}`;
         }
     } else {
         console.warn('Modal não encontrado, usando fallback');
@@ -380,31 +352,37 @@ function iniciarOracao(linha) {
 }
 
 function confirmarIntercessor() {
-    console.log('Confirmando intercessor...');
-    console.log('Pedido atual antes de confirmar:', pedidoAtual);
+    console.log('✅ Confirmando intercessor...');
+    console.log('📌 pedidoAtual:', pedidoAtual);
+    console.log('📌 pedidoSelecionadoParaOrar:', pedidoSelecionadoParaOrar);
     
     const nomeInput = document.getElementById('nome-intercessor');
     if (nomeInput) {
         intercessorNome = nomeInput.value.trim();
-        
-        // Se vazio, usa padrão
-        if (!intercessorNome) {
-            intercessorNome = 'Intercessor';
-        }
-        
-        console.log('Intercessor definido:', intercessorNome);
+        if (!intercessorNome) intercessorNome = 'Intercessor';
     } else {
         intercessorNome = 'Intercessor';
     }
     
+    console.log('🙏 Intercessor:', intercessorNome);
+    
     fecharModal();
+    
+    // Usa a variável específica para oração
+    const linhaParaOrar = pedidoSelecionadoParaOrar || pedidoAtual;
+    
+    if (!linhaParaOrar) {
+        console.error('❌ Nenhuma linha encontrada para orar!');
+        mostrarNotificacao('❌ Erro: Pedido perdido. Clique novamente em "Orar".', 'error');
+        return;
+    }
+    
+    console.log('🎯 Linha para orar:', linhaParaOrar);
     
     // Pequeno delay para garantir que o modal fechou
     setTimeout(() => {
-        console.log('Chamando marcarComoOrando...');
-        console.log('Pedido atual no timeout:', pedidoAtual);
-        marcarComoOrando();
-    }, 100);
+        executarMarcacaoOracao(linhaParaOrar);
+    }, 50);
 }
 
 function fecharModal() {
@@ -418,28 +396,47 @@ function fecharModal() {
         nomeInput.value = '';
     }
     
-    pedidoAtual = null;
+    // NÃO LIMPA pedidoAtual aqui! Só quando a oração for concluída
 }
 
-async function marcarComoOrando() {
-    if (!pedidoAtual) {
+async function executarMarcacaoOracao(linha) {
+    console.log(`🚀 Executando marcação para linha ${linha}`);
+    
+    if (!linha) {
         mostrarNotificacao('❌ Nenhum pedido selecionado', 'error');
         return;
     }
     
-    console.log(`📝 Marcando linha ${pedidoAtual} como orando por ${intercessorNome}`);
+    const linhaNumero = parseInt(linha);
+    if (isNaN(linhaNumero)) {
+        mostrarNotificacao('❌ Erro: Pedido inválido', 'error');
+        return;
+    }
     
-    // Encontra e desabilita o botão
+    console.log(`📝 Marcando linha ${linhaNumero} como orando por ${intercessorNome}`);
+    
+    // Encontra e desabilita o botão CORRETAMENTE
     const botoes = document.querySelectorAll('.btn-orar');
     let botaoEncontrado = null;
     
     botoes.forEach(botao => {
-        if (botao.getAttribute('onclick')?.includes(pedidoAtual)) {
+        // Converte o onclick para string e busca o número
+        const onclickAttr = botao.getAttribute('onclick') || '';
+        // Procura por "iniciarOracao(NUMERO)"
+        if (onclickAttr.includes(`(${linhaNumero})`)) {
             botaoEncontrado = botao;
-            botao.disabled = true;
-            botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
         }
     });
+    
+    // Se não encontrou, tenta encontrar qualquer botão disponível
+    if (!botaoEncontrado && botoes.length > 0) {
+        botaoEncontrado = botoes[0]; // Primeiro botão disponível
+    }
+    
+    if (botaoEncontrado) {
+        botaoEncontrado.disabled = true;
+        botaoEncontrado.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    }
     
     try {
         // Envia para API
@@ -449,7 +446,7 @@ async function marcarComoOrando() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                linha: pedidoAtual,
+                linha: linhaNumero,
                 intercessor: intercessorNome
             })
         });
@@ -478,6 +475,10 @@ async function marcarComoOrando() {
             // Mostra confirmação
             mostrarNotificacao(`✅ Oração registrada por ${intercessorNome}`, 'success');
             
+            // Limpa as variáveis APÓS sucesso
+            pedidoAtual = null;
+            pedidoSelecionadoParaOrar = null;
+            
             // Atualiza estatísticas após 1 segundo
             setTimeout(() => {
                 carregarPedidos();
@@ -497,7 +498,25 @@ async function marcarComoOrando() {
         }
         
         mostrarNotificacao(`❌ Erro: ${error.message}`, 'error');
+        
+        // Mantém as variáveis para tentar novamente
+        console.log('🔄 Mantendo pedido para nova tentativa:', pedidoSelecionadoParaOrar);
     }
+}
+
+// Função original mantida para compatibilidade
+async function marcarComoOrando() {
+    console.log('⚠️ marcarComoOrando() chamada diretamente - usando backup');
+    
+    // Tenta usar a variável específica
+    const linhaParaOrar = pedidoSelecionadoParaOrar || pedidoAtual;
+    
+    if (!linhaParaOrar) {
+        mostrarNotificacao('❌ Nenhum pedido selecionado', 'error');
+        return;
+    }
+    
+    executarMarcacaoOracao(linhaParaOrar);
 }
 
 // ===== FILTRAGEM =====
@@ -574,9 +593,61 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
 // ===== FUNÇÕES GLOBAIS (para onclick) =====
 window.iniciarOracao = iniciarOracao;
 window.fecharModal = fecharModal;
+window.confirmarIntercessor = confirmarIntercessor;
+window.marcarComoOrando = marcarComoOrando;
 
 // Adiciona funções ao escopo global para os eventos onclick
 if (typeof window !== 'undefined') {
     window.carregarPedidos = carregarPedidos;
     window.filtrarPedidos = filtrarPedidos;
 }
+
+// ===== SISTEMA DE BACKUP (para evitar perda do pedido) =====
+(function() {
+    console.log('🛡️ Sistema de backup inicializado');
+    
+    // Backup no localStorage quando um pedido é selecionado
+    const backupPedido = (linha) => {
+        localStorage.setItem('backupPedidoOracao', linha);
+        localStorage.setItem('backupTimestamp', Date.now());
+        console.log('💾 Backup salvo:', linha);
+    };
+    
+    // Restaura do backup se necessário
+    const restaurarBackup = () => {
+        const backup = localStorage.getItem('backupPedidoOracao');
+        const timestamp = localStorage.getItem('backupTimestamp');
+        
+        if (backup && timestamp) {
+            const tempoPassado = Date.now() - parseInt(timestamp);
+            // Só restaura se foi nos últimos 5 minutos
+            if (tempoPassado < 5 * 60 * 1000) {
+                console.log('🔄 Restaurando backup:', backup);
+                pedidoSelecionadoParaOrar = parseInt(backup);
+                return true;
+            }
+        }
+        return false;
+    };
+    
+    // Monitora cliques nos botões "Orar"
+    document.addEventListener('click', function(e) {
+        const botao = e.target.closest('.btn-orar');
+        if (botao) {
+            const onclick = botao.getAttribute('onclick') || '';
+            const match = onclick.match(/iniciarOracao\((\d+)\)/);
+            if (match && match[1]) {
+                backupPedido(match[1]);
+            }
+        }
+    });
+    
+    // Tenta restaurar backup ao carregar a página
+    setTimeout(() => {
+        if (!pedidoSelecionadoParaOrar) {
+            restaurarBackup();
+        }
+    }, 1000);
+    
+    console.log('✅ Sistema de backup pronto');
+})();
