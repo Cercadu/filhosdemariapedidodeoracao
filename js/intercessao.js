@@ -1,5 +1,5 @@
 // ===== CONFIGURAÇÃO =====
-const API_URL = "https://script.google.com/macros/s/AKfycbzeGaVRYS1q9Tom1er3cmt4UwPY61qpICNBG1a5NOhMiPeIaNiPEBHiSKDY5yRf9QmQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyXPpE3_Nqyfle2tRXNpDkKs4yh4oIAANF_Gocw5HkZK2X0yiNEqHt7SrK_86S5qMk4/exec";
 
 // ===== VARIÁVEIS GLOBAIS =====
 let todosPedidos = [];
