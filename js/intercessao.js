@@ -380,6 +380,9 @@ function iniciarOracao(linha) {
 }
 
 function confirmarIntercessor() {
+    console.log('Confirmando intercessor...');
+    console.log('Pedido atual antes de confirmar:', pedidoAtual);
+    
     const nomeInput = document.getElementById('nome-intercessor');
     if (nomeInput) {
         intercessorNome = nomeInput.value.trim();
@@ -388,12 +391,20 @@ function confirmarIntercessor() {
         if (!intercessorNome) {
             intercessorNome = 'Intercessor';
         }
+        
+        console.log('Intercessor definido:', intercessorNome);
     } else {
         intercessorNome = 'Intercessor';
     }
     
     fecharModal();
-    marcarComoOrando();
+    
+    // Pequeno delay para garantir que o modal fechou
+    setTimeout(() => {
+        console.log('Chamando marcarComoOrando...');
+        console.log('Pedido atual no timeout:', pedidoAtual);
+        marcarComoOrando();
+    }, 100);
 }
 
 function fecharModal() {
